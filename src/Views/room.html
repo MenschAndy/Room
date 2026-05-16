@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="room-title">Room - BoltShare</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+            color: #e0e0e0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-info h2 {
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            color: #90caf9;
+        }
+
+        .header-stats span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2196f3, #1976d2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(33, 150, 243, 0.2);
+            color: #90caf9;
+            border: 1px solid rgba(33, 150, 243, 0.4);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(33, 150, 243, 0.3);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 16px;
+            padding: 16px;
+            max-height: calc(100vh - 80px);
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow: hidden;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-button {
+            padding: 12px 20px;
+            background: transparent;
+            color: #90caf9;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            color: #2196f3;
+            border-bottom-color: #2196f3;
+        }
+
+        .tab-button:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-content {
+            display: none;
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+        }
+
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Media Gallery */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            height: 100%;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .gallery-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .gallery-item:hover {
+            border-color: #2196f3;
+            transform: scale(1.05);
+        }
+
+        .gallery-item img,
+        .gallery-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .upload-area {
+            border: 2px dashed rgba(33, 150, 243, 0.5);
+            border-radius: 8px;
+            padding: 32px;
+            text-align: center;
+            background: rgba(33, 150, 243, 0.05);
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 16px;
+        }
+
+        .upload-area:hover {
+            border-color: #2196f3;
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        .upload-area.dragover {
+            border-color: #2196f3;
+            background: rgba(33, 150, 243, 0.15);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            color: #b0bec5;
+            margin-bottom: 8px;
+        }
+
+        .upload-hint {
+            font-size: 12px;
+            color: #90caf9;
+        }
+
+        .upload-input {
+            display: none;
+        }
+
+        .upload-progress {
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 6px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2196f3, #64b5f6);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* Chat */
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 8px;
+            margin-bottom: 16px;
+        }
+
+        .message {
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid #2196f3;
+        }
+
+        .message.private {
+            border-left-color: #ff9800;
+            background: rgba(255, 152, 0, 0.08);
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .message-author {
+            font-weight: 600;
+            color: #64b5f6;
+        }
+
+        .message-time {
+            color: #90caf9;
+            font-size: 12px;
+        }
+
+        .message-content {
+            color: #e0e0e0;
+            word-wrap: break-word;
+        }
+
+        .message-badge {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 6px;
+            background: rgba(255, 152, 0, 0.3);
+            color: #ffb74d;
+            border-radius: 3px;
+            margin-left: 8px;
+        }
+
+        .chat-input-area {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input-wrapper input {
+            flex: 1;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+
+        .chat-input-wrapper input::placeholder {
+            color: #90caf9;
+        }
+
+        .chat-input-wrapper input:focus {
+            outline: none;
+            border-color: #2196f3;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .reply-indicator {
+            font-size: 12px;
+            color: #ff9800;
+            padding: 6px 10px;
+            background: rgba(255, 152, 0, 0.1);
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reply-indicator button {
+            padding: 2px 6px;
+            font-size: 12px;
+            background: transparent;
+            color: #ff9800;
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+
+        .reply-indicator button:hover {
+            background: rgba(255, 152, 0, 0.2);
+        }
+
+        /* Sidebar - Online Users */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-height: calc(100vh - 80px);
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow-y: auto;
+        }
+
+        .sidebar-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #90caf9;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .users-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .user-item:hover {
+            background: rgba(33, 150, 243, 0.15);
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2196f3, #64b5f6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .user-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-name {
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4caf50;
+            margin-left: 4px;
+        }
+
+        .room-info {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-item {
+            font-size: 12px;
+            margin-bottom: 8px;
+            color: #b0bec5;
+        }
+
+        .info-item strong {
+            color: #e0e0e0;
+        }
+
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .room-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: rgba(33, 150, 243, 0.2);
+            border: 1px solid rgba(33, 150, 243, 0.4);
+            border-radius: 6px;
+            color: #90caf9;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .room-link:hover {
+            background: rgba(33, 150, 243, 0.3);
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                max-height: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+
+            .header-right {
+                width: 100%;
+            }
+
+            .header-right button {
+                flex: 1;
+            }
+
+            .gallery {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(33, 150, 243, 0.3);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(33, 150, 243, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            <div class="header-info">
+                <h2 id="room-name">Loading...</h2>
+                <div class="header-stats">
+                    <span>⏰ <span id="timer">00:00</span></span>
+                    <span>👥 <span id="online-count">0</span> online</span>
+                    <span>📁 <span id="file-count">0</span> items</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="btn-secondary" onclick="copyRoomLink()">Copy link</button>
+            <button class="btn-primary" onclick="goHome()">← Home</button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="main-content">
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-button active" onclick="switchTab('media')">Media</button>
+                <button class="tab-button" onclick="switchTab('chat')">Chat</button>
+            </div>
+
+            <!-- Media Tab -->
+            <div id="media" class="tab-content active">
+                <div class="upload-area" id="upload-area" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                    <div class="upload-icon">📤</div>
+                    <div class="upload-text">Drag & drop files here</div>
+                    <div class="upload-hint">or click to select (Max 100MB)</div>
+                    <input type="file" id="file-input" class="upload-input" multiple accept="image/*,video/*,.pdf,.zip" onchange="handleFileSelect(event)">
+                </div>
+                <div class="gallery" id="gallery"></div>
+            </div>
+
+            <!-- Chat Tab -->
+            <div id="chat" class="tab-content">
+                <div class="chat-messages" id="chat-messages"></div>
+                <div class="chat-input-area">
+                    <div id="reply-indicator" class="reply-indicator" style="display: none;">
+                        Replying to: <span id="reply-text"></span>
+                        <button onclick="cancelReply()">Cancel</button>
+                    </div>
+                    <div class="chat-input-wrapper">
+                        <input 
+                            type="text" 
+                            id="message-input" 
+                            placeholder="Type a message..." 
+                            onkeypress="handleMessageKeypress(event)"
+                        >
+                        <button class="btn-primary" onclick="sendMessage()" style="flex: 0;">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <h3>Online (${onlineCount})</h3>
+                <div class="users-list" id="users-list"></div>
+            </div>
+            <div class="room-info">
+                <div class="info-item"><strong>Room ID:</strong></div>
+                <div class="room-link" id="room-link" style="margin-bottom: 10px;">
+                    <span id="link-text">Loading...</span>
+                    <span onclick="copyRoomLink(); event.stopPropagation();" style="cursor: pointer;">📋</span>
+                </div>
+                <div class="info-item"><strong>Expires:</strong> <br><span id="expires-time">Loading...</span></div>
+                <div class="info-item"><strong>Created:</strong> <br><span id="created-time">Loading...</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let roomId = null;
+        let roomData = null;
+        let messages = [];
+        let files = [];
+        let onlineUsers = [];
+        let replyingTo = null;
+        let currentUserName = 'Guest';
+        let pollInterval = null;
+
+        // Get room ID from URL
+        function getRoomIdFromUrl() {
+            const path = window.location.pathname;
+            const match = path.match(/\/room\/(.+)$/);
+            return match ? match[1] : null;
+        }
+
+        // Initialize
+        async function initialize() {
+            roomId = getRoomIdFromUrl();
+            if (!roomId) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Get user name
+            currentUserName = prompt('Your name:', 'Guest');
+            if (!currentUserName) currentUserName = 'Guest';
+
+            // Load room data
+            await loadRoomData();
+            
+            // Load messages and files
+            await refreshChat();
+            await refreshFiles();
+            await refreshOnlineUsers();
+
+            // Start polling
+            pollInterval = setInterval(() => {
+                refreshChat();
+                refreshOnlineUsers();
+                updateTimer();
+            }, 2000);
+
+            // Upload area click
+            document.getElementById('upload-area').onclick = () => {
+                document.getElementById('file-input').click();
+            };
+        }
+
+        async function loadRoomData() {
+            try {
+                const response = await fetch(`/api/rooms/${roomId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    roomData = data.data;
+                    document.getElementById('room-title').textContent = roomData.name + ' - BoltShare';
+                    document.getElementById('room-name').textContent = roomData.name;
+                    document.getElementById('room-link').textContent = window.location.href;
+                    document.getElementById('created-time').textContent = new Date(roomData.created_at).toLocaleString('de-DE');
+                    document.getElementById('expires-time').textContent = new Date(roomData.expires_at).toLocaleString('de-DE');
+                    updateTimer();
+                }
+            } catch (error) {
+                console.error('Error loading room:', error);
+            }
+        }
+
+        async function refreshChat() {
+            try {
+                const response = await fetch(`/api/rooms/${roomId}/messages`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    messages = data.data || [];
+                    renderMessages();
+                }
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        async function refreshFiles() {
+            try {
+                const response = await fetch(`/api/rooms/${roomId}/files`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    files = data.data || [];
+                    renderGallery();
+                    document.getElementById('file-count').textContent = files.length;
+                }
+            } catch (error) {\n                console.error('Error loading files:', error);
+            }
+        }
+
+        async function refreshOnlineUsers() {
+            // Simulate online users (in production, track actual sessions)\n            const userCount = Math.floor(Math.random() * 5) + 1;
+            document.getElementById('online-count').textContent = userCount;
+        }
+
+        function renderMessages() {
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = messages.map(msg => `
+                <div class="message ${msg.is_private ? 'private' : ''}">
+                    <div class="message-header">
+                        <span class="message-author">${msg.sender_name}${msg.is_private ? '<span class="message-badge">🔒 Private</span>' : ''}</span>
+                        <span class="message-time">${new Date(msg.created_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                    <div class="message-content">${escapeHtml(msg.content)}</div>
+                </div>
+            `).join('');
+            
+            // Auto scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function renderGallery() {
+            const gallery = document.getElementById('gallery');
+            
+            if (files.length === 0) {
+                gallery.innerHTML = '<p style=\"grid-column: 1/-1; text-align: center; color: #90caf9; padding: 20px;\">No files uploaded yet</p>';\n                return;
+            }
+            
+            gallery.innerHTML = files.map(file => {
+                const isImage = /\\.(jpg|jpeg|png|gif|webp)$/i.test(file.file_path);
+                const isVideo = /\\.(mp4|webm|mov)$/i.test(file.file_path);
+                
+                return `
+                    <div class="gallery-item" title="${file.original_filename}">
+                        ${isImage ? `<img src="${file.file_path}" alt="${file.original_filename}" loading=\"lazy\">` : ''}
+                        ${isVideo ? `<video src="${file.file_path}\"></video>` : ''}
+                        ${!isImage && !isVideo ? `<div style=\"width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 40px;\">${getFileIcon(file.original_filename)}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                'pdf': '📄',
+                'zip': '📦',
+                'doc': '📝',
+                'xls': '📊',
+                'txt': '📃'
+            };
+            return icons[ext] || '📁';
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const content = input.value.trim();
+            
+            if (!content) return;
+
+            try {
+                const response = await fetch(`/api/rooms/${roomId}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content,
+                        sender_name: currentUserName,
+                        is_private: replyingTo ? 1 : 0,
+                        recipient_id: replyingTo
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    input.value = '';
+                    cancelReply();
+                    await refreshChat();
+                }
+            } catch (error) {
+                alert('Error sending message');
+            }
+        }
+
+        function handleMessageKeypress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.getElementById('upload-area').classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.getElementById('upload-area').classList.remove('dragover');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            document.getElementById('upload-area').classList.remove('dragover');
+            
+            const files = event.dataTransfer.files;
+            uploadFiles(files);
+        }
+
+        function handleFileSelect(event) {
+            uploadFiles(event.target.files);
+        }
+
+        async function uploadFiles(fileList) {
+            for (const file of fileList) {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('uploader_name', currentUserName);
+
+                try {
+                    const xhr = new XMLHttpRequest();
+                    
+                    xhr.upload.addEventListener('progress', (event) => {
+                        if (event.lengthComputable) {
+                            const percent = (event.loaded / event.total) * 100;
+                            console.log(`Upload progress: ${percent}%`);
+                        }
+                    });
+
+                    xhr.onload = async () => {
+                        if (xhr.status === 200) {
+                            const data = JSON.parse(xhr.responseText);
+                            if (data.success) {
+                                await refreshFiles();
+                            }
+                        }
+                    };
+
+                    xhr.open('POST', `/api/rooms/${roomId}/upload`);
+                    xhr.send(formData);
+                } catch (error) {
+                    console.error('Upload error:', error);
+                }
+            }
+        }
+
+        function updateTimer() {
+            if (!roomData) return;
+            
+            const expiresAt = new Date(roomData.expires_at);
+            const now = new Date();
+            const diff = expiresAt - now;
+            
+            if (diff <= 0) {
+                document.getElementById('timer').textContent = 'Expired';
+                return;
+            }
+            
+            const minutes = Math.floor(diff / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            
+            document.getElementById('timer').textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function copyRoomLink() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Room link copied to clipboard!');
+            });
+        }
+
+        function goHome() {
+            window.location.href = '/';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function cancelReply() {
+            replyingTo = null;
+            document.getElementById('reply-indicator').style.display = 'none';
+        }
+
+        // Start app
+        initialize();
+    </script>
+</body>
+</html>
